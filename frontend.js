@@ -15,9 +15,7 @@ function komment_form(in_config)
       data: { komment_id: in_config.komment_id },
       dataType: 'json',
       success: function() {
-        alert("Thanks for the comment")
         $('#'+id_comments).load("comments_"+in_config.komment_id+".json");
-        alert("Here is your comment")
       },
       error: function() {
         alert("Error!")
