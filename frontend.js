@@ -15,7 +15,8 @@ function komment_form(in_config)
       data: { komment_id: in_config.komment_id },
       dataType: 'json',
       success: function() {
-        $('#'+id_comments).load("comments_"+in_config.komment_id+".json");
+        komment_comments(in_config)
+        komment_count(in_config)
       },
       error: function() {
         alert("Error!")
@@ -35,12 +36,30 @@ function komment_comments(in_config)
     document.write('<div id="'+id+'"/></div>')
   }
 
-  $('#'+id).load("comments_"+in_config.komment_id+".json")
+  $('#'+id).load(
+    "backend.cgi",
+    { "r": "l", "komment_id": in_config.komment_id }
+  )
+
 }
 
 
 function komment_count(in_config)
 {
-  var id = "komment_form_" + in_config.komment_id
+  var id = "komment_count_" + in_config.komment_id
+
+  if ($('#'+id).length == 0)
+  {
+    document.write('<div id="'+id+'"/></div>')
+  }
+
+  jQuery.getJSON(
+    "backend.cgi", 
+    { "r": "c", "komment_id": in_config.komment_id },
+    function(in_json) {
+      $('#'+id).html("Count = "+in_json.count)
+    }
+  )
+
 }
 
