@@ -15,7 +15,7 @@ import (
 
 const LOG_PATH = "komment.log"
 const LOG_MODE = 0664
-const LOG_FLAG = os.O_WRONLY | os.O_CREATE | os.O_SYNC
+const LOG_FLAG = os.O_WRONLY | os.O_CREATE | os.O_SYNC | os.O_APPEND
 
 const COMMENT_PATH = "comments"
 const COMMENT_FLAG = os.O_CREATE | os.O_WRONLY | os.O_EXCL
@@ -27,12 +27,14 @@ const LIMIT_COMMENTS = 500
 const COOKIE_EDIT_WINDOW = 300
 const COOKIE_PREFIX = "komment_ownership_"
 
+
 func elapsed(what string) func() {
   start := time.Now()
   return func() {
-    fmt.Printf("/* %s took %v */\n", what, time.Since(start))
+    fmt.Fprintf(os.Stderr, "%s -> %v\n", what, time.Since(start))
   }
 }
+
 
 func emit_status_500(msg string) {
 
@@ -43,11 +45,13 @@ func emit_status_500(msg string) {
   os.Exit(500)
 }
 
+
 type Comment struct {
   Name string `json:"name"`
   Comment string `json:"comment"`
   Stamp string `json:"stamp"`
 }
+
 
 func handler(w http.ResponseWriter, r *http.Request) {
 
@@ -56,6 +60,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
   // append new comment
   if request == "a" {
+
+    defer elapsed("append:"+komment_id)()
 
     var comment Comment
     comment.Comment = r.FormValue("comment")
@@ -96,6 +102,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
   // count
   } else if request == "c" {
 
+    defer elapsed("count:"+komment_id)()
+
     // open file
     path := COMMENT_PATH + "/" + komment_id
     jsonpath, err := os.Open(path)
@@ -119,6 +127,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
   // list all comments
   } else if request == "l" {
+
+    defer elapsed("list:"+komment_id)()
 
     w.Header().Set("Content-Type", "text/html")
     w.WriteHeader(200)
