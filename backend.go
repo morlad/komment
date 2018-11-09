@@ -30,7 +30,7 @@ const COOKIE_PREFIX = "komment_ownership_"
 func elapsed(what string) func() {
   start := time.Now()
   return func() {
-    fmt.Fprintf(os.Stderr, "%s took %v\n", what, time.Since(start))
+    fmt.Printf("/* %s took %v */\n", what, time.Since(start))
   }
 }
 
@@ -96,8 +96,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
   // count
   } else if request == "c" {
 
-    elapsed("count")()
-
     // open file
     path := COMMENT_PATH + "/" + komment_id
     jsonpath, err := os.Open(path)
@@ -121,8 +119,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
   // list all comments
   } else if request == "l" {
-
-    elapsed("list")()
 
     w.Header().Set("Content-Type", "text/html")
     w.WriteHeader(200)
@@ -162,8 +158,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 
 func main() {
-
-  elapsed("main")()
 
   // redirect <stderr> to logfile
   logFile, err := os.OpenFile(LOG_PATH, LOG_FLAG, LOG_MODE)
