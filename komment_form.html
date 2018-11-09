@@ -1,6 +1,15 @@
-
 <form method="POST" action="backend.cgi">
-  <input type="text" name="komment"/>
-  <input type="hidden" name="komment_id" value="asdf"/>
+  <div>
+  <label for="name">Name:</label>
+  <input type="text" name="name" placeholder="Arno The Mouse" required autocomplete />
+  </div>
+
+  <div>
+  <label for="comment">Comment:</label>
+  <textarea name="comment" placeholder="Type your comment here ..." required />
+  </div>
+
+  <input type="hidden" name="komment_id" value=""/>
+
   <input type="submit" />
 </form>

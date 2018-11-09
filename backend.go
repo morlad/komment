@@ -2,43 +2,55 @@ package main
 
 import (
   "fmt"
-  //"os"
+  "os"
+  "syscall"
   "io/ioutil"
   "net/http"
   "net/http/cgi"
-  //"encoding/json" // for config file
+  "encoding/json" // for config file
 )
 
-func errorResponse(code int, msg string) {
+func emit_status_500(msg string) {
 
-  fmt.Printf("Status: %d Script Error\r\n", code)
+  fmt.Printf("Status: 500 Script Error\r\n")
   fmt.Printf("Content-Type: text/plain\r\n")
-  fmt.Printf("Connection: close\r\n")
   fmt.Printf("\r\n")
   fmt.Printf("%s\r\n", msg)
-  return
 }
 
-func myhandler(w http.ResponseWriter, r *http.Request) {
+func handler(w http.ResponseWriter, r *http.Request) {
 
-  r.Header.Set("Content-Type:", "text/json")
+  w.Header().Set("Content-Type", "text/json")
+  w.WriteHeader(200)
 
   r.ParseForm()
-  komment := r.Form["komment"][0]
-  komment_id := r.Form["komment_id"][0]
-  komment2 := []byte(komment)
 
-  //b, err := json.Marshal(komment)
-  //if err != nil {
-    ioutil.WriteFile("comment"+komment_id+".txt", komment2, 0644)
-  //}
+  data := make(map[string]string)
+  data["komment_id"] = r.Form["komment_id"][0]
+  data["comment"] = r.Form["comment"][0]
+  data["name"] = r.Form["name"][0]
+
+  b, err := json.Marshal(data)
+  if err == nil {
+    ioutil.WriteFile("comments_"+data["komment_id"]+".json", b, 0644)
+  } else {
+    b = []byte(err.Error())
+    ioutil.WriteFile("comments_"+data["komment_id"]+".json", b, 0644)
+  }
 }
 
 func main() {
 
-  if err := cgi.Serve(http.HandlerFunc(myhandler)); err != nil {
-    d1 := []byte("script error\n")
-    ioutil.WriteFile("logfile.txt", d1, 0644)
-    errorResponse(500, "Script Error " + err.Error())
+  // redirect <stderr> to logfile
+  logFile, err := os.OpenFile("komment.log", os.O_WRONLY | os.O_CREATE | os.O_SYNC, 0664)
+  if err != nil {
+    emit_status_500(err.Error())
+    return
+  }
+  syscall.Dup2(int(logFile.Fd()), 2)
+
+  err = cgi.Serve(http.HandlerFunc(handler))
+  if err != nil {
+    emit_status_500(err.Error())
   }
 }

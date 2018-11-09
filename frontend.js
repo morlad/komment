@@ -15,7 +15,7 @@ function komment_form(in_config)
     $('#'+id).ajaxForm({
       resetForm: true,
       success: function() {
-        $('#'+id_comments).load("comment"+in_config.komment_id+".txt");
+        $('#'+id_comments).load("comments_"+in_config.komment_id+".txt");
       }
     });
   })
@@ -32,7 +32,7 @@ function komment_comments(in_config)
     document.write('<div id="'+id+'"/></div>')
   }
 
-  $('#'+id).load("comment"+in_config.komment_id+".txt")
+  $('#'+id).load("comments_"+in_config.komment_id+".txt")
 }
 
 
