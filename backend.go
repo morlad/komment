@@ -50,6 +50,7 @@ type Comment struct {
   Name string `json:"name"`
   Comment string `json:"comment"`
   Stamp string `json:"stamp"`
+  CanEdit bool
 }
 
 
@@ -151,6 +152,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
       err = json.Unmarshal(content, &comment)
       if err != nil {
         emit_status_500(err.Error())
+      }
+      cookie, err := r.Cookie(COOKIE_PREFIX + comment.Stamp)
+      if cookie != nil {
+        comment.CanEdit = true
       }
       err = template.Execute(w, comment)
       if err != nil {
