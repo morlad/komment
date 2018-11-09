@@ -1,0 +1,5 @@
+glob:*.swp
+glob:.htaccess
+glob:.DS_Store
+glob:*.cgi
+glob:push.sh
