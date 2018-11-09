@@ -10,12 +10,17 @@ function komment_form(in_config)
   }
 
   $('#'+id).load("komment_form.html", null, function(){
-    var obj = $('#'+id+' input[name="komment_id"]').get(0)
-    obj.value = in_config.komment_id
     $('#'+id).ajaxForm({
       resetForm: true,
+      data: { komment_id: in_config.komment_id },
+      dataType: 'json',
       success: function() {
-        $('#'+id_comments).load("comments_"+in_config.komment_id+".txt");
+        alert("Thanks for the comment")
+        $('#'+id_comments).load("comments_"+in_config.komment_id+".json");
+        alert("Here is your comment")
+      },
+      error: function() {
+        alert("Error!")
       }
     });
   })
@@ -32,7 +37,7 @@ function komment_comments(in_config)
     document.write('<div id="'+id+'"/></div>')
   }
 
-  $('#'+id).load("comments_"+in_config.komment_id+".txt")
+  $('#'+id).load("comments_"+in_config.komment_id+".json")
 }
 
 

@@ -37,6 +37,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
     b = []byte(err.Error())
     ioutil.WriteFile("comments_"+data["komment_id"]+".json", b, 0644)
   }
+
+  fmt.Fprintln(w, "{ \"result\": \"ok\" }")
 }
 
 func main() {
