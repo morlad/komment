@@ -11,6 +11,7 @@
   <div class="komment_edit" style="display:none">
   <form class="komment_edit_form" method="POST" action="backend.cgi" onsubmit="return komment_edit_send(this)">
     <textarea name="comment">{{.Comment}}</textarea>
+    <input type="hidden" name="message_id" value="{{.MessageId}}"/>
     <input type="submit"/>
     <input type="button" value="Cancel" onclick="komment_edit_unprepare(this)"/>
   </form>

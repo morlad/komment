@@ -90,6 +90,7 @@ function komment_edit_send(in_root)
     dataType: 'html',
     success: function(r, s, x, form) {
       komment_edit_unprepare(form.get())
+      komment_comments({komment_id: 1})
     },
     error: function() {
       alert("Error!")

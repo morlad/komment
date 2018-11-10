@@ -53,6 +53,13 @@ type Comment struct {
   CanEdit bool
 }
 
+type CommentTemplateData struct {
+  Name string
+  Comment string
+  CanEdit bool
+  MessageId string
+}
+
 
 func handler(w http.ResponseWriter, r *http.Request) {
 
@@ -154,10 +161,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
         emit_status_500(err.Error())
       }
       cookie, err := r.Cookie(COOKIE_PREFIX + comment.Stamp)
+
+      var tdata CommentTemplateData
+      tdata.Comment = comment.Comment
+      tdata.Name = comment.Name
+      tdata.MessageId = fmt.Sprintf("%v", number)
       if cookie != nil {
-        comment.CanEdit = true
+        tdata.CanEdit = true
       }
-      err = template.Execute(w, comment)
+      err = template.Execute(w, tdata)
       if err != nil {
         emit_status_500(err.Error())
       }
@@ -168,6 +180,28 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
     w.Header().Set("Content-Type", "text/html")
     w.WriteHeader(200)
+
+    message_id := r.FormValue("message_id")
+    path := fmt.Sprintf("%s/%v/%v.json", COMMENT_PATH, komment_id, message_id)
+
+    new_comment := r.FormValue("comment")
+
+    content, err := ioutil.ReadFile(path)
+    if err != nil {
+      emit_status_500(err.Error())
+    }
+    var comment Comment
+    err = json.Unmarshal(content, &comment)
+    if err != nil {
+      emit_status_500(err.Error())
+    }
+    comment.Comment = new_comment
+    b, err := json.Marshal(comment)
+    if err != nil {
+      panic(err.Error())
+    }
+    file, err := os.Create(path)
+    file.Write(b)
 
   // no request type -> error
   } else {
