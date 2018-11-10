@@ -1,0 +1,61 @@
+body {
+  font-family: sans-serif;
+  background-color: #f0f0ff;
+}
+
+.komment_block {
+  background-color: #ffffff;
+  border: 1px solid black;
+  margin: 1em;
+  width: 500px;
+}
+
+.komment_name {
+  font-size: 75%;
+  color: #555555;
+  margin: 0.5em;
+}
+
+.komment_message {
+  margin: 1em;
+}
+
+.komment_deleted {
+  padding: 0.5em;
+  font-size: 75%;
+  color: #777777;
+}
+
+.komment_form {
+  background-color: #ffffff;
+  border: 1px solid black;
+  width: 600px;
+}
+
+.komment_form input[type=submit] {
+  font-family: sans-serif;
+  font-size: 100%;
+  margin: 0.5em;
+  padding: 0.5em;
+}
+
+.komment_form_name {
+  margin: 0.5em;
+}
+
+.komment_form_name input {
+  font-family: sans-serif;
+  font-size: 100%;
+  padding: 0.2em;
+}
+
+.komment_form_message {
+  margin: 0.5em;
+}
+
+.komment_form_message textarea {
+  font-family: sans-serif;
+  font-size: 100%;
+  width: 100%;
+  padding: 0.2em;
+}

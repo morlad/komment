@@ -2,6 +2,8 @@
 
   <head>
 
+    <link rel="stylesheet" type="text/css" href="test.css" />
+
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.form/4.2.2/jquery.form.min.js" integrity="sha384-FzT3vTVGXqf7wRfy8k4BiyzvbNfeYjK+frTVqZeNDFl8woCbF0CYG6g2fMEFFo/i" crossorigin="anonymous"></script>
@@ -12,21 +14,16 @@
 
   <body>
 
-
-    <div>Those are with ID #1<br/>
     <script>komment_form({komment_id: 1})</script> 
-    <script>komment_comments({komment_id: 1})</script> 
     <script>komment_count({komment_id: 1})</script> 
-  </div>
+    <script>komment_comments({komment_id: 1})</script> 
 
 
-  <div>Those are with ID #2<br/>
     <div id="komment_form_2">Enable Javascript for comments</div>
-    <script>komment_comments({komment_id: 2})</script> 
     <script>komment_count({komment_id: 2})</script> 
-  </div>
+    <script>komment_comments({komment_id: 2})</script> 
 
-  <script>komment_form({komment_id: 2})</script>
+    <script>komment_form({komment_id: 2})</script>
 
   </body>
 
