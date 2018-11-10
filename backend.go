@@ -115,13 +115,28 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
     defer elapsed("count:"+komment_id)()
 
+    // load template
+    template, err := template.ParseFiles("count.html.tmpl")
+    if err != nil {
+      emit_status_500(err.Error())
+    }
+    type CountTemplateData struct {
+      Count int
+    }
+    var tdata CountTemplateData
+
     // open file
     path := COMMENT_PATH + "/" + komment_id
     jsonpath, err := os.Open(path)
     if err != nil {
       if os.IsNotExist(err) {
+        w.Header().Set("Content-Type", "text/html")
         w.WriteHeader(200)
-        fmt.Fprint(w, "{ \"count\": 0 }")
+        tdata.Count = 0
+        err = template.Execute(w, tdata)
+        if err != nil {
+          emit_status_500(err.Error())
+        }
         return
       } else {
         emit_status_500(err.Error())
@@ -131,10 +146,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
     defer jsonpath.Close()
 
     names, err := jsonpath.Readdirnames(0)
-
+    w.Header().Set("Content-Type", "text/html")
     w.WriteHeader(200)
-    fmt.Fprintf(w, "{ \"count\": %v }", len(names))
-
+    tdata.Count = len(names)
+    err = template.Execute(w, tdata)
+    if err != nil {
+      emit_status_500(err.Error())
+    }
 
   // list all comments
   } else if request == "l" {

@@ -53,12 +53,9 @@ function komment_count(in_config)
     document.write('<div id="'+id+'"/></div>')
   }
 
-  jQuery.getJSON(
-    "backend.cgi", 
-    { "r": "c", "komment_id": in_config.komment_id },
-    function(in_json) {
-      $('#'+id).html("Count = "+in_json.count)
-    }
+  $('#'+id).load(
+    "backend.cgi",
+    { "r": "c", "komment_id": in_config.komment_id }
   )
 
 }
