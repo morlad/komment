@@ -11,6 +11,9 @@ import (
   "io/ioutil"
   "time"
   "html/template"
+  "strconv"
+  "crypto/sha256"
+  "bytes"
 )
 
 const LOG_PATH = "komment.log"
@@ -61,6 +64,18 @@ type CommentTemplateData struct {
   Deleted bool
 }
 
+func uid_gen(r *http.Request) string {
+
+  buf := bytes.NewBufferString(r.FormValue("komment_id"))
+  buf.WriteString(strconv.FormatInt(time.Now().UnixNano(), 16))
+  buf.WriteString(r.FormValue("comment"))
+  buf.WriteString(r.RemoteAddr)
+  buf.WriteString(strconv.FormatUint(rand.Uint64(), 16))
+
+  h := sha256.New()
+  h.Write(buf.Bytes())
+  return fmt.Sprintf("%x", h.Sum(nil))
+}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 
@@ -75,7 +90,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     var comment Comment
     comment.Comment = r.FormValue("comment")
     comment.Name = r.FormValue("name")
-    comment.Stamp = fmt.Sprintf("%x", rand.Uint64())
+    comment.Stamp = uid_gen(r)
 
     b, err := json.Marshal(comment)
     if err != nil {
