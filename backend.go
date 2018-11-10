@@ -14,6 +14,8 @@ import (
   "strconv"
   "crypto/sha256"
   "bytes"
+  "regexp"
+  "strings"
 )
 
 const LOG_PATH = "komment.log"
@@ -65,9 +67,9 @@ type CommentTemplateData struct {
   Deleted bool
 }
 
-func uid_gen(r *http.Request) string {
+func uid_gen(r *http.Request, komment_id string) string {
 
-  buf := bytes.NewBufferString(r.FormValue("komment_id"))
+  buf := bytes.NewBufferString(komment_id)
   buf.WriteString(strconv.FormatInt(time.Now().UnixNano(), 16))
   buf.WriteString(r.FormValue("comment"))
   buf.WriteString(r.RemoteAddr)
@@ -78,10 +80,19 @@ func uid_gen(r *http.Request) string {
   return fmt.Sprintf("%x", h.Sum(nil))
 }
 
+func sanitize_komment_id(in string) string {
+  rex, err := regexp.Compile("[^a-zA-Z0-9_]+")
+  if err != nil {
+    emit_status_500(err.Error())
+  }
+  out := rex.ReplaceAllLiteralString(in, "-")
+  return strings.ToLower(out)
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
 
   request := r.FormValue("r")
-  komment_id := r.FormValue("komment_id")
+  komment_id := sanitize_komment_id(r.FormValue("komment_id"))
 
   // append new comment
   if request == "a" {
@@ -91,7 +102,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     var comment Comment
     comment.Comment = r.FormValue("comment")
     comment.Name = r.FormValue("name")
-    comment.Stamp = uid_gen(r)
+    comment.Stamp = uid_gen(r, komment_id)
 
     b, err := json.Marshal(comment)
     if err != nil {
