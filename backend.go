@@ -83,6 +83,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
     }
     number := 1
     var f *os.File
+    // make sure the requested directory exists
+    os.MkdirAll(fmt.Sprintf("%v/%v", COMMENT_PATH, komment_id), 0755)
     for ; number <= LIMIT_COMMENTS; number += 1 {
       f, err = os.OpenFile(
         fmt.Sprintf("%v/%v/%v.json", COMMENT_PATH, komment_id, number),
