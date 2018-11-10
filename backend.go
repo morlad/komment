@@ -165,6 +165,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
   // edit comment
   } else if request == "e" {
+
+    w.Header().Set("Content-Type", "text/html")
+    w.WriteHeader(200)
+
   // no request type -> error
   } else {
     emit_status_500("Invalid Request")

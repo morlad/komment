@@ -63,3 +63,38 @@ function komment_count(in_config)
 
 }
 
+function komment_edit_prepare(in_root)
+{
+  komment_block = $(in_root).closest(".komment_block")
+  komment_message = komment_block.find(".komment_message")
+  komment_edit = komment_block.find(".komment_edit")
+
+  komment_edit.css("display", "block")
+  komment_message.css("display", "none")
+}
+
+function komment_edit_unprepare(in_root)
+{
+  komment_block = $(in_root).closest(".komment_block")
+  komment_message = komment_block.find(".komment_message")
+  komment_edit = komment_block.find(".komment_edit")
+
+  komment_message.css("display", "block")
+  komment_edit.css("display", "none")
+}
+
+function komment_edit_send(in_root)
+{
+  $(in_root).ajaxSubmit({
+    data: { "r": "e", "komment_id": "1" },
+    dataType: 'html',
+    success: function(r, s, x, form) {
+      komment_edit_unprepare(form.get())
+    },
+    error: function() {
+      alert("Error!")
+    }
+  });
+
+  return false
+}

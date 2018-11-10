@@ -1,1 +1,19 @@
-<div>{{.Name}}: {{.Comment}} {{if .CanEdit}}<a href="about:blank">edit</a>{{end}}</div>
+<div class="komment_block">
+  <div class="komment_name">{{.Name}}:</div>
+  <div class="komment_message">{{.Comment}}
+{{if .CanEdit}}
+  <div class="komment_misc">
+    <a onclick="komment_edit_prepare(this)">edit</a>
+  </div>
+{{end}}
+  </div>
+{{if .CanEdit}}
+  <div class="komment_edit" style="display:none">
+  <form class="komment_edit_form" method="POST" action="backend.cgi" onsubmit="return komment_edit_send(this)">
+    <textarea name="comment">{{.Comment}}</textarea>
+    <input type="submit"/>
+    <input type="button" value="Cancel" onclick="komment_edit_unprepare(this)"/>
+  </form>
+  </div>
+{{end}}
+</div>
