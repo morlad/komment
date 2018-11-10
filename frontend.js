@@ -23,8 +23,8 @@ function komment_form(in_config)
       data: { komment_id: komment_id },
       dataType: 'json',
       success: function() {
-        komment_comments(in_config)
-        komment_count(in_config)
+        komment_comments(in_config, true)
+        komment_count(in_config, true)
       },
       error: function() {
         alert("Error!")
@@ -35,13 +35,14 @@ function komment_form(in_config)
 }
 
 
-function komment_comments(in_config)
+function komment_comments(in_config, in_do_not_add)
 {
   var komment_id = komment_sanitize_komment_id(in_config.komment_id)
   var id = "komment_comments_" + komment_id
 
   if ($('#'+id).length == 0)
   {
+    if (in_do_not_add) { return }
     document.write('<div id="'+id+'"/></div>')
   }
 
@@ -53,13 +54,14 @@ function komment_comments(in_config)
 }
 
 
-function komment_count(in_config)
+function komment_count(in_config, in_do_not_add)
 {
   var komment_id = komment_sanitize_komment_id(in_config.komment_id)
   var id = "komment_count_" + komment_id
 
   if ($('#'+id).length == 0)
   {
+    if (in_do_not_add) { return }
     document.write('<div id="'+id+'"/></div>')
   }
 
