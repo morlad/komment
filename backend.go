@@ -50,7 +50,7 @@ type Comment struct {
   Name string `json:"name"`
   Comment string `json:"comment"`
   Stamp string `json:"stamp"`
-  CanEdit bool
+  Deleted bool `json:"deleted"`
 }
 
 type CommentTemplateData struct {
@@ -58,6 +58,7 @@ type CommentTemplateData struct {
   Comment string
   CanEdit bool
   MessageId string
+  Deleted bool
 }
 
 
@@ -165,6 +166,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
       var tdata CommentTemplateData
       tdata.Comment = comment.Comment
       tdata.Name = comment.Name
+      tdata.Deleted = comment.Deleted
       tdata.MessageId = fmt.Sprintf("%v", number)
       if cookie != nil {
         tdata.CanEdit = true
