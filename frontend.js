@@ -80,14 +80,14 @@ function komment_edit_unprepare(in_root)
   komment_edit.css("display", "none")
 }
 
-function komment_edit_send(in_root)
+function komment_edit_send(in_root, in_komment_id)
 {
   $(in_root).ajaxSubmit({
-    data: { "r": "e", "komment_id": "1" },
+    data: { "r": "e" },
     dataType: 'html',
     success: function(r, s, x, form) {
       komment_edit_unprepare(form.get())
-      komment_comments({komment_id: 1})
+      komment_comments({komment_id: in_komment_id})
     },
     error: function() {
       alert("Error!")

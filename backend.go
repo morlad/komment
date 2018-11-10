@@ -61,6 +61,7 @@ type CommentTemplateData struct {
   Comment string
   CanEdit bool
   MessageId string
+  KommentId string
   Deleted bool
 }
 
@@ -201,6 +202,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
       var tdata CommentTemplateData
       tdata.Comment = comment.Comment
       tdata.Name = comment.Name
+      tdata.KommentId = komment_id
       tdata.Deleted = comment.Deleted
       tdata.MessageId = fmt.Sprintf("%v", number)
       if cookie != nil {
