@@ -189,7 +189,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "text/html")
     w.WriteHeader(200)
 
-    template, err := template.ParseFiles("comment.html.tmpl")
+    template, err := template.ParseFiles("message.html.tmpl")
     if err != nil {
       emit_status_500(err.Error())
     }

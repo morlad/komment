@@ -17,10 +17,10 @@ function komment_form(in_config)
     document.write('<div id="'+id+'"></div>')
   }
 
-  $('#'+id).load("komment_form.html", null, function(){
+  $('#'+id).load("form.html", null, function(){
     $('#'+id).ajaxForm({
       resetForm: true,
-      data: { komment_id: komment_id },
+      data: { "r": "a", komment_id: komment_id },
       dataType: 'json',
       success: function() {
         komment_comments(in_config, true)
@@ -47,7 +47,7 @@ function komment_comments(in_config, in_do_not_add)
   }
 
   $('#'+id).load(
-    "backend.cgi",
+    "komment.cgi",
     { "r": "l", "komment_id": komment_id }
   )
 
@@ -66,7 +66,7 @@ function komment_count(in_config, in_do_not_add)
   }
 
   $('#'+id).load(
-    "backend.cgi",
+    "komment.cgi",
     { "r": "c", "komment_id": komment_id }
   )
 
