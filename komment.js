@@ -20,7 +20,7 @@ function komment_form(in_config)
   $('#'+id).load("form.html", null, function(){
     $('#'+id).ajaxForm({
       resetForm: true,
-      data: { "r": "a", komment_id: komment_id },
+      data: { "r": "a", komment_id: in_config.komment_id },
       dataType: 'json',
       success: function() {
         komment_comments(in_config, true)
@@ -48,7 +48,7 @@ function komment_comments(in_config, in_do_not_add)
 
   $('#'+id).load(
     "komment.cgi",
-    { "r": "l", "komment_id": komment_id }
+    { "r": "l", "komment_id": in_config.komment_id }
   )
 
 }
@@ -67,7 +67,7 @@ function komment_count(in_config, in_do_not_add)
 
   $('#'+id).load(
     "komment.cgi",
-    { "r": "c", "komment_id": komment_id }
+    { "r": "c", "komment_id": in_config.komment_id }
   )
 
 }
@@ -100,7 +100,7 @@ function komment_edit_send(in_root, in_komment_id)
     dataType: 'html',
     success: function(r, s, x, form) {
       komment_edit_unprepare(form.get())
-      komment_comments({komment_id: komment_id})
+      komment_comments({komment_id: in_komment_id})
     },
     error: function() {
       alert("Error!")

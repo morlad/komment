@@ -81,11 +81,11 @@ func uid_gen(r *http.Request, komment_id string) string {
 }
 
 func sanitize_komment_id(in string) string {
-  rex, err := regexp.Compile("[^a-zA-Z0-9_]+")
+  rex, err := regexp.Compile("(^\\.|[/\r\n\t])")
   if err != nil {
     emit_status_500(err.Error())
   }
-  out := rex.ReplaceAllLiteralString(in, "-")
+  out := rex.ReplaceAllLiteralString(in, "_")
   return strings.ToLower(out)
 }
 
