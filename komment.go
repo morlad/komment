@@ -59,8 +59,8 @@ type Comment struct {
 }
 
 type CommentTemplateData struct {
-  Name string
-  Comment string
+  Name template.HTML
+  Comment template.HTML
   CanEdit bool
   MessageId string
   KommentId string
@@ -89,6 +89,16 @@ func sanitize_komment_id(in string) string {
   return strings.ToLower(out)
 }
 
+func sanitize_message(in string) string {
+  in = strings.Replace(in, "\r", "", -1)
+  rex, err := regexp.Compile("\n{3,}")
+  if err != nil {
+    emit_status_500(err.Error())
+  }
+  out := rex.ReplaceAllLiteralString(in, "\n\n")
+  return out
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
 
   request := r.FormValue("r")
@@ -100,7 +110,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     defer elapsed("append:"+komment_id)()
 
     var comment Comment
-    comment.Comment = r.FormValue("comment")
+    comment.Comment = sanitize_message(r.FormValue("comment"))
     comment.Name = r.FormValue("name")
     comment.Stamp = uid_gen(r, komment_id)
 
@@ -189,7 +199,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "text/html")
     w.WriteHeader(200)
 
-    template, err := template.ParseFiles("message.html.tmpl")
+    templ, err := template.ParseFiles("message.html.tmpl")
     if err != nil {
       emit_status_500(err.Error())
     }
@@ -211,15 +221,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
       cookie, err := r.Cookie(COOKIE_PREFIX + comment.Stamp)
 
       var tdata CommentTemplateData
-      tdata.Comment = comment.Comment
-      tdata.Name = comment.Name
+      tdata.Name = template.HTML(template.HTMLEscapeString(comment.Name))
+      html_comment := template.HTMLEscapeString(comment.Comment)
+      html_comment = strings.Replace(html_comment, "\n", "<br/>", -1)
+      tdata.Comment = template.HTML(html_comment)
       tdata.KommentId = komment_id
       tdata.Deleted = comment.Deleted
       tdata.MessageId = fmt.Sprintf("%v", number)
       if cookie != nil {
         tdata.CanEdit = true
       }
-      err = template.Execute(w, tdata)
+      err = templ.Execute(w, tdata)
       if err != nil {
         emit_status_500(err.Error())
       }
@@ -234,7 +246,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     message_id := r.FormValue("message_id")
     path := fmt.Sprintf("%s/%v/%v.json", COMMENT_PATH, komment_id, message_id)
 
-    new_comment := r.FormValue("comment")
+    new_comment := sanitize_message(r.FormValue("comment"))
 
     content, err := ioutil.ReadFile(path)
     if err != nil {
