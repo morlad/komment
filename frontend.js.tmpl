@@ -22,6 +22,10 @@ var Komment = (function() {
         $(this).load("{{.CgiPath}}", {
           r: "l",
           komment_id: $(this).data("komment-id")
+        }, function() {
+          self.prepareEditButtons()
+          self.prepareEndEditButtons()
+          self.prepareEditForms()
         })
       }
     })
@@ -39,7 +43,6 @@ var Komment = (function() {
           data: { r: "a", komment_id: thread_id },
           dataType: "json",
           success: function() {
-            // TODO only reload the required counts/messages
             self.refreshCounts(thread_id)
             self.refreshMessages(thread_id)
           },
@@ -48,6 +51,41 @@ var Komment = (function() {
           }
         })
       })
+    })
+  }
+
+  self.prepareEditForms = function() {
+    $("form.komment_edit_form").ajaxForm({
+      data: {
+        r: "e"
+      },
+      dataType: 'html',
+      beforeSerialize: function(form, options) {
+        options.data.komment_id = form.data("komment-id")
+        options.data.message_id = form.data("message-id")
+      },
+      success: function(txt_response, txt_status, xhr, form) {
+        self.refreshMessages(form.data("komment-id"))
+      },
+      error: function() {
+        alert("Error!")
+      }
+    });
+  }
+
+  self.prepareEditButtons = function() {
+    $("a.komment_edit_button").on('click', function() {
+      block = $(this).closest(".komment_block")
+      message = block.find(".komment_message").css("display", "none")
+      edit = block.find(".komment_edit").css("display", "block")
+    })
+  }
+
+  self.prepareEndEditButtons = function() {
+    $("form.komment_edit_form > input[type=button]").on('click', function() {
+      block = $(this).closest(".komment_block")
+      message = block.find(".komment_message").css("display", "block")
+      edit = block.find(".komment_edit").css("display", "none")
     })
   }
 
@@ -60,43 +98,3 @@ var Komment = (function() {
   return self
 
 }());
-
-function komment_edit_prepare(in_root)
-{
-  komment_block = $(in_root).closest(".komment_block")
-  komment_message = komment_block.find(".komment_message")
-  komment_edit = komment_block.find(".komment_edit")
-
-  komment_edit.css("display", "block")
-  komment_message.css("display", "none")
-}
-
-function komment_edit_unprepare(in_root)
-{
-  komment_block = $(in_root).closest(".komment_block")
-  komment_message = komment_block.find(".komment_message")
-  komment_edit = komment_block.find(".komment_edit")
-
-  komment_message.css("display", "block")
-  komment_edit.css("display", "none")
-}
-
-function komment_edit_send(in_root, in_komment_id)
-{
-  var komment_id = komment_sanitize_komment_id(in_komment_id)
-  $(in_root).ajaxSubmit({
-    data: { "r": "e" },
-    dataType: 'html',
-    success: function(r, s, x, form) {
-      komment_edit_unprepare(form.get())
-      komment_comments({komment_id: in_komment_id})
-    },
-    error: function() {
-      alert("Error!")
-    }
-  });
-
-  return false
-}
-
-
