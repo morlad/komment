@@ -34,7 +34,7 @@ body {
   color: #777777;
 }
 
-.komment_form {
+form.komment_form {
   background-color: #ffffff;
   border: 1px solid black;
   width: 600px;

@@ -1,35 +1,44 @@
 <html>
-
   <head>
-
     <link rel="stylesheet" type="text/css" href="example.css" />
+  </head>
 
+  <body>
+
+    <div>
+      Thread #1
+      <div class="komment_form" data-komment-id="1"></div>
+      <div class="komment_count" data-komment-id="1"></div>
+      <div class="komment_messages" data-komment-id="1">
+        Enable Javascript to see comments
+      </div>
+    </div>
+
+    <div>
+      Thread #2
+      <div class="komment_form" data-komment-id="2"></div>
+      <div class="komment_count" data-komment-id="2"></div>
+      <div class="komment_messages" data-komment-id="2">
+        Enable Javascript to see comments
+      </div>
+    </div>
+
+    <div>
+      Bottom-Up Messages
+      <div class="komment_messages" data-komment-id="thread for another article">
+        Enable Javascript to see comments
+      </div>
+      <div class="komment_form" data-komment-id="thread for another article"></div>
+    </div>
+
+    <!-- load required scripts -->
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.form/4.2.2/jquery.form.min.js" integrity="sha384-FzT3vTVGXqf7wRfy8k4BiyzvbNfeYjK+frTVqZeNDFl8woCbF0CYG6g2fMEFFo/i" crossorigin="anonymous"></script>
 
     <script src="/komment/komment.cgi?r=script"></script>
 
-  </head>
-
-  <body>
-
-    <script>komment_form({komment_id: 1})</script> 
-    <script>komment_count({komment_id: 1})</script> 
-    <script>komment_comments({komment_id: 1})</script> 
-
-
-    <div id="komment_form_2">Enable Javascript for comments</div>
-    <script>komment_count({komment_id: 2})</script> 
-    <script>komment_comments({komment_id: 2})</script> 
-
-    <script>komment_form({komment_id: 2})</script>
-
-
-    <div>Form at bottom</div>
-    <script>komment_comments({komment_id: "thread for another article"})</script> 
-    <script>komment_form({komment_id: "thread for another article"})</script>
+    <script>Komment.init()</script>
 
   </body>
-
 </html>

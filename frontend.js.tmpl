@@ -1,79 +1,65 @@
 // vim: ft=javascript
-var Komment = {
-}
+var Komment = (function() {
 
-function komment_sanitize_komment_id(in_kid)
-{
-  in_kid = '' + in_kid
-  var rex = /[^a-zA-Z0-9_]+/g;
-  return in_kid.replace(rex, "-").toLowerCase()
-}
+  var self = {}
 
-function komment_form(in_config)
-{
-  var komment_id = komment_sanitize_komment_id(in_config.komment_id)
-  var id = "komment_form_" + komment_id
-  var id_comments = "komment_comments_" + komment_id
-
-  if ($('#'+id).length == 0)
-  {
-    document.write('<div id="'+id+'"></div>')
-  }
-
-  $('#'+id).load("{{ .CgiPath }}?r=form", null, function(){
-    $('#'+id).ajaxForm({
-      resetForm: true,
-      data: { "r": "a", komment_id: in_config.komment_id },
-      dataType: 'json',
-      success: function() {
-        komment_comments(in_config, true)
-        komment_count(in_config, true)
-      },
-      error: function() {
-        alert("Error!")
+  self.refreshCounts = function(thread_id) {
+    $("div.komment_count").each(function(i, obj) {
+      if (thread_id === undefined || $(this).data("komment-id") == thread_id)
+      {
+        $(this).load("{{.CgiPath}}", {
+          r: "c",
+          komment_id: $(this).data("komment-id")
+        })
       }
-    });
-  })
-
-}
-
-
-function komment_comments(in_config, in_do_not_add)
-{
-  var komment_id = komment_sanitize_komment_id(in_config.komment_id)
-  var id = "komment_comments_" + komment_id
-
-  if ($('#'+id).length == 0)
-  {
-    if (in_do_not_add) { return }
-    document.write('<div id="'+id+'"/></div>')
+    })
   }
 
-  $('#'+id).load(
-    "{{ .CgiPath }}",
-    { "r": "l", "komment_id": in_config.komment_id }
-  )
-
-}
-
-
-function komment_count(in_config, in_do_not_add)
-{
-  var komment_id = komment_sanitize_komment_id(in_config.komment_id)
-  var id = "komment_count_" + komment_id
-
-  if ($('#'+id).length == 0)
-  {
-    if (in_do_not_add) { return }
-    document.write('<div id="'+id+'"/></div>')
+  self.refreshMessages = function(thread_id) {
+    $("div.komment_messages").each(function(i, obj) {
+      if (thread_id === undefined || $(this).data("komment-id") == thread_id)
+      {
+        $(this).load("{{.CgiPath}}", {
+          r: "l",
+          komment_id: $(this).data("komment-id")
+        })
+      }
+    })
   }
 
-  $('#'+id).load(
-    "{{ .CgiPath }}",
-    { "r": "c", "komment_id": in_config.komment_id }
-  )
+  self.replaceForms = function() {
+    $("div.komment_form").each(function(i, obj) {
+      var thread_id = $(this).data("komment-id")
+      $(this).load("{{.CgiPath}}", {
+        r: "form",
+        komment_id: thread_id
+      }, function() {
+        $(this).ajaxForm({
+          resetForm: true,
+          data: { r: "a", komment_id: thread_id },
+          dataType: "json",
+          success: function() {
+            // TODO only reload the required counts/messages
+            self.refreshCounts(thread_id)
+            self.refreshMessages(thread_id)
+          },
+          error: function() {
+            alert("Error!")
+          }
+        })
+      })
+    })
+  }
 
-}
+  self.init = function() {
+    self.replaceForms()
+    self.refreshCounts()
+    self.refreshMessages()
+  }
+
+  return self
+
+}());
 
 function komment_edit_prepare(in_root)
 {
@@ -112,3 +98,5 @@ function komment_edit_send(in_root, in_komment_id)
 
   return false
 }
+
+
