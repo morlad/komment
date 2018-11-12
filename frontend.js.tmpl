@@ -1,3 +1,6 @@
+// vim: ft=javascript
+var Komment = {
+}
 
 function komment_sanitize_komment_id(in_kid)
 {
@@ -17,7 +20,7 @@ function komment_form(in_config)
     document.write('<div id="'+id+'"></div>')
   }
 
-  $('#'+id).load("form.html", null, function(){
+  $('#'+id).load("{{ .CgiPath }}?r=form", null, function(){
     $('#'+id).ajaxForm({
       resetForm: true,
       data: { "r": "a", komment_id: in_config.komment_id },
@@ -47,7 +50,7 @@ function komment_comments(in_config, in_do_not_add)
   }
 
   $('#'+id).load(
-    "komment.cgi",
+    "{{ .CgiPath }}",
     { "r": "l", "komment_id": in_config.komment_id }
   )
 
@@ -66,7 +69,7 @@ function komment_count(in_config, in_do_not_add)
   }
 
   $('#'+id).load(
-    "komment.cgi",
+    "{{ .CgiPath }}",
     { "r": "c", "komment_id": in_config.komment_id }
   )
 

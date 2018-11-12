@@ -22,7 +22,6 @@ const LOG_PATH = "komment.log"
 const LOG_MODE = 0664
 const LOG_FLAG = os.O_WRONLY | os.O_CREATE | os.O_SYNC | os.O_APPEND
 
-const COMMENT_PATH = "comments"
 const COMMENT_FLAG = os.O_CREATE | os.O_WRONLY | os.O_EXCL
 const COMMENT_MODE = 0664
 
@@ -33,10 +32,18 @@ const COOKIE_EDIT_WINDOW = 300
 const COOKIE_PREFIX = "komment_ownership_"
 
 
+type Configuration struct {
+  CgiPath string `json:"CgiPath"`
+  MessagesPath string `json:"MessagesPath"`
+  TemplatePath string `json:"TemplatePath"`
+}
+
+var g_config Configuration
+
 func elapsed(what string) func() {
   start := time.Now()
   return func() {
-    fmt.Fprintf(os.Stderr, "%s -> %v\n", what, time.Since(start))
+    fmt.Fprintf(os.Stderr, "%s\t=\t%v\n", what, time.Since(start))
   }
 }
 
@@ -65,6 +72,7 @@ type CommentTemplateData struct {
   MessageId string
   KommentId string
   Deleted bool
+  CgiPath string
 }
 
 func uid_gen(r *http.Request, komment_id string) string {
@@ -107,7 +115,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
   // append new comment
   if request == "a" {
 
-    defer elapsed("append:"+komment_id)()
+    defer elapsed("append: "+komment_id)()
 
     var comment Comment
     comment.Comment = sanitize_message(r.FormValue("comment"))
@@ -121,10 +129,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
     number := 1
     var f *os.File
     // make sure the requested directory exists
-    os.MkdirAll(fmt.Sprintf("%v/%v", COMMENT_PATH, komment_id), 0755)
+    os.MkdirAll(fmt.Sprintf("%v/%v", g_config.MessagesPath, komment_id), 0755)
     for ; number <= LIMIT_COMMENTS; number += 1 {
       f, err = os.OpenFile(
-        fmt.Sprintf("%v/%v/%v.json", COMMENT_PATH, komment_id, number),
+        fmt.Sprintf("%v/%v/%v.json", g_config.MessagesPath, komment_id, number),
         COMMENT_FLAG,
         COMMENT_MODE)
       if err == nil {
@@ -150,10 +158,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
   // count
   } else if request == "c" {
 
-    defer elapsed("count:"+komment_id)()
+    defer elapsed("count: "+komment_id)()
 
     // load template
-    template, err := template.ParseFiles("count.html.tmpl")
+    templ, err := template.ParseFiles(g_config.TemplatePath + "count.html.tmpl")
     if err != nil {
       emit_status_500(err.Error())
     }
@@ -163,14 +171,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
     var tdata CountTemplateData
 
     // open file
-    path := COMMENT_PATH + "/" + komment_id
+    path := g_config.MessagesPath + "/" + komment_id
     jsonpath, err := os.Open(path)
     if err != nil {
       if os.IsNotExist(err) {
         w.Header().Set("Content-Type", "text/html")
         w.WriteHeader(200)
         tdata.Count = 0
-        err = template.Execute(w, tdata)
+        err = templ.Execute(w, tdata)
         if err != nil {
           emit_status_500(err.Error())
         }
@@ -186,7 +194,53 @@ func handler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "text/html")
     w.WriteHeader(200)
     tdata.Count = len(names)
-    err = template.Execute(w, tdata)
+    err = templ.Execute(w, tdata)
+    if err != nil {
+      emit_status_500(err.Error())
+    }
+
+  // form
+  } else if request == "form" {
+
+    defer elapsed("form: "+komment_id)()
+
+    // load template
+    templ, err := template.ParseFiles(g_config.TemplatePath + "form.html.tmpl")
+    if err != nil {
+      emit_status_500(err.Error())
+    }
+    type FormTemplateData struct {
+      CgiPath string
+    }
+    var tdata FormTemplateData
+
+    w.Header().Set("Content-Type", "text/html")
+    w.WriteHeader(200)
+    tdata.CgiPath = g_config.CgiPath
+    err = templ.Execute(w, tdata)
+    if err != nil {
+      emit_status_500(err.Error())
+    }
+
+  // form
+  } else if request == "script" {
+
+    defer elapsed("script: "+komment_id)()
+
+    // load template
+    templ, err := template.ParseFiles(g_config.TemplatePath + "frontend.js.tmpl")
+    if err != nil {
+      emit_status_500(err.Error())
+    }
+    type FormTemplateData struct {
+      CgiPath string
+    }
+    var tdata FormTemplateData
+
+    w.Header().Set("Content-Type", "application/javascript")
+    w.WriteHeader(200)
+    tdata.CgiPath = g_config.CgiPath
+    err = templ.Execute(w, tdata)
     if err != nil {
       emit_status_500(err.Error())
     }
@@ -194,18 +248,18 @@ func handler(w http.ResponseWriter, r *http.Request) {
   // list all comments
   } else if request == "l" {
 
-    defer elapsed("list:"+komment_id)()
+    defer elapsed("list: "+komment_id)()
 
     w.Header().Set("Content-Type", "text/html")
     w.WriteHeader(200)
 
-    templ, err := template.ParseFiles("message.html.tmpl")
+    templ, err := template.ParseFiles(g_config.TemplatePath + "message.html.tmpl")
     if err != nil {
       emit_status_500(err.Error())
     }
 
     for number := 1; number <= LIMIT_COMMENTS; number += 1 {
-      content, err := ioutil.ReadFile(fmt.Sprintf("%v/%v/%v.json", COMMENT_PATH, komment_id, number))
+      content, err := ioutil.ReadFile(fmt.Sprintf("%v/%v/%v.json", g_config.MessagesPath, komment_id, number))
       if err != nil {
         if os.IsNotExist(err) {
           break // reached end of files
@@ -227,6 +281,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
       tdata.Comment = template.HTML(html_comment)
       tdata.KommentId = komment_id
       tdata.Deleted = comment.Deleted
+      tdata.CgiPath = g_config.CgiPath
       tdata.MessageId = fmt.Sprintf("%v", number)
       if cookie != nil {
         tdata.CanEdit = true
@@ -244,7 +299,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(200)
 
     message_id := r.FormValue("message_id")
-    path := fmt.Sprintf("%s/%v/%v.json", COMMENT_PATH, komment_id, message_id)
+    path := fmt.Sprintf("%s/%v/%v.json", g_config.MessagesPath, komment_id, message_id)
 
     new_comment := sanitize_message(r.FormValue("comment"))
 
@@ -273,6 +328,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 
 func main() {
+
+  content, err := ioutil.ReadFile("config.json")
+  if err != nil {
+    emit_status_500(err.Error())
+  }
+  err = json.Unmarshal(content, &g_config)
+  if err != nil {
+    emit_status_500(err.Error())
+  }
 
   // redirect <stderr> to logfile
   logFile, err := os.OpenFile(LOG_PATH, LOG_FLAG, LOG_MODE)
