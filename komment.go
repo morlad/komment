@@ -110,6 +110,7 @@ func sanitize_message(in string) string {
 func handler(w http.ResponseWriter, r *http.Request) {
 
   request := r.FormValue("r")
+  raw_komment_id := r.FormValue("komment_id")
   komment_id := sanitize_komment_id(r.FormValue("komment_id"))
 
   // append new comment
@@ -279,7 +280,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
       html_comment := template.HTMLEscapeString(comment.Comment)
       html_comment = strings.Replace(html_comment, "\n", "<br/>", -1)
       tdata.Comment = template.HTML(html_comment)
-      tdata.KommentId = komment_id
+      tdata.KommentId = raw_komment_id
       tdata.Deleted = comment.Deleted
       tdata.CgiPath = g_config.CgiPath
       tdata.MessageId = fmt.Sprintf("%v", number)
