@@ -65,16 +65,6 @@ type Comment struct {
   Deleted bool `json:"deleted"`
 }
 
-type CommentTemplateData struct {
-  Name template.HTML
-  Comment template.HTML
-  CanEdit bool
-  MessageId string
-  KommentId string
-  Deleted bool
-  CgiPath string
-}
-
 func uid_gen(r *http.Request, komment_id string) string {
 
   buf := bytes.NewBufferString(komment_id)
@@ -275,11 +265,23 @@ func handler(w http.ResponseWriter, r *http.Request) {
       }
       cookie, err := r.Cookie(COOKIE_PREFIX + comment.Stamp)
 
+      type CommentTemplateData struct {
+        Name template.HTML
+        Comment template.HTML
+        RawComment string
+        CanEdit bool
+        MessageId string
+        KommentId string
+        Deleted bool
+        CgiPath string
+      }
+
       var tdata CommentTemplateData
       tdata.Name = template.HTML(template.HTMLEscapeString(comment.Name))
       html_comment := template.HTMLEscapeString(comment.Comment)
       html_comment = strings.Replace(html_comment, "\n", "<br/>", -1)
       tdata.Comment = template.HTML(html_comment)
+      tdata.RawComment = comment.Comment
       tdata.KommentId = raw_komment_id
       tdata.Deleted = comment.Deleted
       tdata.CgiPath = g_config.CgiPath

@@ -13,7 +13,7 @@
 {{if .CanEdit}}
   <div class="komment_edit" style="display:none">
   <form class="komment_edit_form" method="POST" action="{{.CgiPath}}" data-komment-id="{{.KommentId}}" data-message-id="{{.MessageId}}">
-    <textarea name="comment">{{.Comment}}</textarea>
+    <textarea name="comment">{{.RawComment}}</textarea>
     <input type="submit"/>
     <input type="button" value="Cancel"/>
   </form>
