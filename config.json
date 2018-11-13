@@ -1,5 +1,6 @@
 {
   "CgiPath": "/komment/komment.cgi",
   "MessagesPath": "comments",
-  "TemplatePath": ""
+  "TemplatePath": "",
+  "EditWindow": 300
 }

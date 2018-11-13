@@ -28,7 +28,6 @@ const COMMENT_MODE = 0664
 const LIMIT_COMMENTS = 500
 
 // in seconds
-const COOKIE_EDIT_WINDOW = 300
 const COOKIE_PREFIX = "komment_ownership_"
 
 
@@ -36,6 +35,7 @@ type Configuration struct {
   CgiPath string `json:"CgiPath"`
   MessagesPath string `json:"MessagesPath"`
   TemplatePath string `json:"TemplatePath"`
+  EditWindow int `json:"EditWindow"`
 }
 
 var g_config Configuration
@@ -150,7 +150,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     var cookie http.Cookie
     cookie.Name = COOKIE_PREFIX + comment.Stamp
     cookie.Value = "true"
-    cookie.MaxAge = COOKIE_EDIT_WINDOW
+    cookie.MaxAge = g_config.EditWindow
     http.SetCookie(w, &cookie)
 
     w.WriteHeader(200)
