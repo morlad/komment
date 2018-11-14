@@ -61,6 +61,7 @@ func emit_status_500(msg string) {
 type Comment struct {
   Name string `json:"name"`
   Comment string `json:"comment"`
+  Date string `json:"date"`
   Stamp string `json:"stamp"`
   Deleted bool `json:"deleted"`
 }
@@ -111,6 +112,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     var comment Comment
     comment.Comment = sanitize_message(r.FormValue("comment"))
     comment.Name = r.FormValue("name")
+    comment.Date = time.Now().UTC().Format(time.RFC3339)
     comment.Stamp = uid_gen(r, komment_id)
 
     b, err := json.Marshal(comment)
@@ -274,6 +276,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
         KommentId string
         Deleted bool
         CgiPath string
+        Date string
       }
 
       var tdata CommentTemplateData
@@ -286,6 +289,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
       tdata.Deleted = comment.Deleted
       tdata.CgiPath = g_config.CgiPath
       tdata.MessageId = fmt.Sprintf("%v", number)
+      date, err := time.Parse(time.RFC3339, comment.Date)
+      tdata.Date = date.Format(time.RFC1123)
       if cookie != nil {
         tdata.CanEdit = true
       }
