@@ -290,7 +290,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
       tdata.CgiPath = g_config.CgiPath
       tdata.MessageId = fmt.Sprintf("%v", number)
       date, err := time.Parse(time.RFC3339, comment.Date)
-      tdata.Date = date.Format(time.RFC1123)
+      tdata.Date = date.Format("2006-Jan-2, Mon 15:04 MST")
       if cookie != nil {
         tdata.CanEdit = true
       }
