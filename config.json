@@ -2,5 +2,6 @@
   "CgiPath": "/komment/komment.cgi",
   "MessagesPath": "comments",
   "TemplatePath": "",
-  "EditWindow": 300
+  "EditWindow": 300,
+  "DateFormat": "2006-Jan-2, Mon 15:04 MST"
 }

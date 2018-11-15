@@ -36,6 +36,7 @@ type Configuration struct {
   MessagesPath string `json:"MessagesPath"`
   TemplatePath string `json:"TemplatePath"`
   EditWindow int `json:"EditWindow"`
+  DateFormat string `json:"DateFormat"`
 }
 
 var g_config Configuration
@@ -290,7 +291,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
       tdata.CgiPath = g_config.CgiPath
       tdata.MessageId = fmt.Sprintf("%v", number)
       date, err := time.Parse(time.RFC3339, comment.Date)
-      tdata.Date = date.Format("2006-Jan-2, Mon 15:04 MST")
+      tdata.Date = date.Format(g_config.DateFormat)
       if cookie != nil {
         tdata.CanEdit = true
       }
