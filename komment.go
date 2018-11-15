@@ -71,7 +71,7 @@ func uid_gen(r *http.Request, komment_id string) string {
 
   buf := bytes.NewBufferString(komment_id)
   buf.WriteString(strconv.FormatInt(time.Now().UnixNano(), 16))
-  buf.WriteString(r.FormValue("comment"))
+  buf.WriteString(r.FormValue("message"))
   buf.WriteString(r.RemoteAddr)
   buf.WriteString(strconv.FormatUint(rand.Uint64(), 16))
 
@@ -105,13 +105,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
   raw_komment_id := r.FormValue("komment_id")
   komment_id := sanitize_komment_id(r.FormValue("komment_id"))
 
-  // append new comment
+  // append new message
   if request == "a" {
 
     defer elapsed("append: "+komment_id)()
 
     var comment Comment
-    comment.Comment = sanitize_message(r.FormValue("comment"))
+    comment.Comment = sanitize_message(r.FormValue("message"))
     comment.Name = r.FormValue("name")
     comment.Date = time.Now().UTC().Format(time.RFC3339)
     comment.Stamp = uid_gen(r, komment_id)
@@ -239,7 +239,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
       emit_status_500(err.Error())
     }
 
-  // list all comments
+  // list all messages
   } else if request == "l" {
 
     defer elapsed("list: "+komment_id)()
@@ -301,7 +301,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
       }
     }
 
-  // edit comment
+  // edit messages
   } else if request == "e" {
 
     w.Header().Set("Content-Type", "text/html")
@@ -310,7 +310,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     message_id := r.FormValue("message_id")
     path := fmt.Sprintf("%s/%v/%v.json", g_config.MessagesPath, komment_id, message_id)
 
-    new_comment := sanitize_message(r.FormValue("comment"))
+    new_comment := sanitize_message(r.FormValue("message"))
 
     content, err := ioutil.ReadFile(path)
     if err != nil {
