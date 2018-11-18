@@ -338,7 +338,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-  content, err := ioutil.ReadFile("config.json")
+  content, err := ioutil.ReadFile("config/komment.json")
   if err != nil {
     emit_status_500(err.Error())
   }
