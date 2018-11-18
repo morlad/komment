@@ -155,7 +155,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     defer elapsed("count: "+komment_id)()
 
     // load template
-    templ, err := template.ParseFiles(g_config.TemplatePath + "count.html.tmpl")
+    templ, err := template.ParseFiles(g_config.TemplatePath + "/count.html.tmpl")
     if err != nil {
       emit_status_500(err.Error())
     }
@@ -199,7 +199,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     defer elapsed("form: "+komment_id)()
 
     // load template
-    templ, err := template.ParseFiles(g_config.TemplatePath + "form.html.tmpl")
+    templ, err := template.ParseFiles(g_config.TemplatePath + "/form.html.tmpl")
     if err != nil {
       emit_status_500(err.Error())
     }
@@ -222,7 +222,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     defer elapsed("script: "+komment_id)()
 
     // load template
-    templ, err := template.ParseFiles(g_config.TemplatePath + "frontend.js.tmpl")
+    templ, err := template.ParseFiles(g_config.TemplatePath + "/frontend.js.tmpl")
     if err != nil {
       emit_status_500(err.Error())
     }
@@ -247,7 +247,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "text/html")
     w.WriteHeader(200)
 
-    templ, err := template.ParseFiles(g_config.TemplatePath + "message.html.tmpl")
+    templ, err := template.ParseFiles(g_config.TemplatePath + "/message.html.tmpl")
     if err != nil {
       emit_status_500(err.Error())
     }
