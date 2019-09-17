@@ -1,6 +1,0 @@
-glob:*.swp
-glob:.DS_Store
-glob:*.cgi
-glob:push.sh
-syntax: glob
-.htaccess
