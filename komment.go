@@ -108,6 +108,13 @@ func sanitize_message(in string) string {
 	return out
 }
 
+func sanitize_name(in string) (out string) {
+	if g_config.MaxNameLength > 0 && len(in) > g_config.MaxNameLength {
+		out = in[:g_config.MaxNameLength] + " ..."
+	}
+	return
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
 
 	request := r.FormValue("r")
@@ -121,7 +128,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		var comment Comment
 		comment.Comment = sanitize_message(r.FormValue("message"))
-		comment.Name = r.FormValue("name")
+		comment.Name = sanitize_name(r.FormValue("name"))
 		comment.Date = time.Now().UTC().Format(time.RFC3339)
 		comment.Stamp = uid_gen(r, komment_id)
 
