@@ -44,6 +44,7 @@ type Configuration struct {
   SmtpPassword string `json:"SmtpPassword"`
   SmtpFrom string `json:"SmtpFrom"`
   SmtpTo string `json:"SmtpTo"`
+  ListenOn string `json:"ListenOn"`
 }
 
 var g_config Configuration
@@ -379,8 +380,16 @@ func main() {
   syscall.Dup2(int(logFile.Fd()), 2)
 
   // serve
-  err = cgi.Serve(http.HandlerFunc(handler))
-  if err != nil {
-    emit_status_500(err.Error())
+  if g_config.ListenOn != "" {
+    http.HandleFunc("/", handler)
+    err := http.ListenAndServe(g_config.ListenOn, nil)
+    if err != nil {
+      panic("Unable to start HTTP server: " + err.Error())
+    }
+  } else {
+    err = cgi.Serve(http.HandlerFunc(handler))
+    if err != nil {
+      emit_status_500(err.Error())
+    }
   }
 }
