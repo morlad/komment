@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
@@ -12,6 +13,7 @@ import (
 	"net/http/cgi"
 	"net/smtp"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -32,19 +34,22 @@ const LIMIT_COMMENTS = 500
 const COOKIE_PREFIX = "komment_ownership_"
 
 type Configuration struct {
-	CgiPath      string `json:"CgiPath"`
-	MessagesPath string `json:"MessagesPath"`
-	TemplatePath string `json:"TemplatePath"`
-	EditWindow   int    `json:"EditWindow"`
-	DateFormat   string `json:"DateFormat"`
-	SmtpHostname string `json:"SmtpHostname"`
-	SmtpPort     int    `json:"SmtpPort"`
-	SmtpUser     string `json:"SmtpUser"`
-	SmtpPassword string `json:"SmtpPassword"`
-	SmtpFrom     string `json:"SmtpFrom"`
-	SmtpTo       string `json:"SmtpTo"`
-	ListenOn     string `json:"ListenOn"`
-	MaxLength    int    `json:"MaxLength"`
+	CgiPath       string `json:"CgiPath"`
+	MessagesPath  string `json:"MessagesPath"`
+	TemplatePath  string `json:"TemplatePath"`
+	EditWindow    int    `json:"EditWindow"`
+	DateFormat    string `json:"DateFormat"`
+	SmtpHostname  string `json:"SmtpHostname"`
+	SmtpPort      int    `json:"SmtpPort"`
+	SmtpUser      string `json:"SmtpUser"`
+	SmtpPassword  string `json:"SmtpPassword"`
+	SmtpFrom      string `json:"SmtpFrom"`
+	SmtpTo        string `json:"SmtpTo"`
+	ListenOn      string `json:"ListenOn"`
+	MaxLength     int    `json:"MaxLength"`
+	MaxNameLength int    `json:"MaxNameLength"`
+	Whitelist     string `json:"Whitelist"`
+	IdValidator   string `json:"IdValidator"`
 }
 
 var g_config Configuration
@@ -125,6 +130,35 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if request == "a" {
 
 		defer elapsed("append: " + komment_id)()
+
+		// validate komment_id
+		var is_valid_id bool = false
+		if g_config.Whitelist != "" {
+			file, err := os.Open(g_config.Whitelist)
+			if err != nil {
+				panic(err.Error())
+			}
+			defer file.Close()
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				matched, err := regexp.MatchString(scanner.Text(), komment_id)
+				if err == nil && matched {
+					is_valid_id = true
+					break
+				}
+			}
+		}
+		if !is_valid_id && g_config.IdValidator != "" {
+			cmd := exec.Command(g_config.IdValidator, raw_komment_id, komment_id)
+			err := cmd.Run()
+			if err == nil {
+				is_valid_id = true
+			}
+		}
+		if !is_valid_id {
+			w.WriteHeader(200)
+			fmt.Fprintf(w, "{ \"result\": %v }\n", 0)
+		}
 
 		var comment Comment
 		comment.Comment = sanitize_message(r.FormValue("message"))
