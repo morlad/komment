@@ -16,6 +16,7 @@ import (
   "bytes"
   "regexp"
   "strings"
+  "net/smtp"
 )
 
 const LOG_PATH = "komment.log"
@@ -37,6 +38,12 @@ type Configuration struct {
   TemplatePath string `json:"TemplatePath"`
   EditWindow int `json:"EditWindow"`
   DateFormat string `json:"DateFormat"`
+  SmtpHostname string `json:"SmtpHostname"`
+  SmtpPort int `json:"SmtpPort"`
+  SmtpUser string `json:"SmtpUser"`
+  SmtpPassword string `json:"SmtpPassword"`
+  SmtpFrom string `json:"SmtpFrom"`
+  SmtpTo string `json:"SmtpTo"`
 }
 
 var g_config Configuration
@@ -145,6 +152,22 @@ func handler(w http.ResponseWriter, r *http.Request) {
     cookie.Value = "true"
     cookie.MaxAge = g_config.EditWindow
     http.SetCookie(w, &cookie)
+
+    // send mail
+    if g_config.SmtpTo != "" {
+      mail_msg := "Id: " + raw_komment_id + "\r\n" + comment.Comment
+      mail_to := []string{g_config.SmtpTo}
+      msg := []byte("To: " + g_config.SmtpTo + "\r\n" +
+        "From: " + g_config.SmtpFrom + "\r\n" +
+        "Subject: New Comment!\r\n" +
+        "\r\n" +
+        mail_msg + "\r\n")
+      auth := smtp.PlainAuth("", g_config.SmtpUser, g_config.SmtpPassword, g_config.SmtpHostname)
+      err := smtp.SendMail(g_config.SmtpHostname + ":" + strconv.Itoa(g_config.SmtpPort), auth, g_config.SmtpFrom, mail_to, msg)
+      if err != nil {
+        fmt.Fprintf(os.Stderr, "SendMail: %v\n", err)
+      }
+    }
 
     w.WriteHeader(200)
     fmt.Fprintf(w, "{ \"result\": %v }\n", number)
