@@ -44,6 +44,7 @@ type Configuration struct {
 	SmtpFrom     string `json:"SmtpFrom"`
 	SmtpTo       string `json:"SmtpTo"`
 	ListenOn     string `json:"ListenOn"`
+	MaxLength    int    `json:"MaxLength"`
 }
 
 var g_config Configuration
@@ -101,6 +102,9 @@ func sanitize_message(in string) string {
 		emit_status_500(err.Error())
 	}
 	out := rex.ReplaceAllLiteralString(in, "\n\n")
+	if g_config.MaxLength > 0 && len(out) > g_config.MaxLength {
+		out = out[:g_config.MaxLength] + " ..."
+	}
 	return out
 }
 
