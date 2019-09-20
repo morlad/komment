@@ -21,17 +21,19 @@ import (
 	"time"
 )
 
-const LOG_PATH = "komment.log"
-const LOG_MODE = 0664
-const LOG_FLAG = os.O_WRONLY | os.O_CREATE | os.O_SYNC | os.O_APPEND
+const (
+	LOG_PATH = "komment.log"
 
-const COMMENT_FLAG = os.O_CREATE | os.O_WRONLY | os.O_EXCL
-const COMMENT_MODE = 0664
+	LOG_MODE = 0664
+	LOG_FLAG = os.O_WRONLY | os.O_CREATE | os.O_SYNC | os.O_APPEND
 
-const LIMIT_COMMENTS = 500
+	COMMENT_FLAG = os.O_CREATE | os.O_WRONLY | os.O_EXCL
+	COMMENT_MODE = 0664
 
-// in seconds
-const COOKIE_PREFIX = "komment_ownership_"
+	LIMIT_COMMENTS = 500
+
+	COOKIE_PREFIX = "komment_ownership_"
+)
 
 type Configuration struct {
 	CgiPath       string `json:"CgiPath"`
