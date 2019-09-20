@@ -133,8 +133,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		defer elapsed("append: " + komment_id)()
 
 		// validate komment_id
-		var is_valid_id bool = false
-		if g_config.Whitelist != "" {
+		var is_valid_id bool = g_config.Whitelist == "" && g_config.IdValidator == ""
+		if !is_valid_id && g_config.Whitelist != "" {
 			file, err := os.Open(g_config.Whitelist)
 			if err != nil {
 				panic(err.Error())
@@ -154,11 +154,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			err := cmd.Run()
 			if err == nil {
 				is_valid_id = true
-			}
+			} else {
+			  w.WriteHeader(403)
+        fmt.Fprintf(os.Stderr, "IdValidator: %v\n", err)
+        return
+      }
 		}
 		if !is_valid_id {
-			w.WriteHeader(200)
-			fmt.Fprintf(w, "{ \"result\": %v }\n", 0)
+			w.WriteHeader(403)
+      return
 		}
 
 		var comment Comment
