@@ -117,8 +117,8 @@ func sanitize_name(in string) string {
 	if g_config.MaxNameLength > 0 && len(in) > g_config.MaxNameLength {
 		return in[:g_config.MaxNameLength] + " ..."
 	} else {
-    return in
-  }
+		return in
+	}
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -155,14 +155,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				is_valid_id = true
 			} else {
-			  w.WriteHeader(403)
-        fmt.Fprintf(os.Stderr, "IdValidator: %v\n", err)
-        return
-      }
+				w.WriteHeader(403)
+				fmt.Fprintf(os.Stderr, "IdValidator: %v\n", err)
+				return
+			}
 		}
 		if !is_valid_id {
 			w.WriteHeader(403)
-      return
+			return
 		}
 
 		var comment Comment
