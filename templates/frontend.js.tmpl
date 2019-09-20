@@ -4,41 +4,43 @@ var Komment = (function() {
   var self = {}
 
   self.refreshCounts = function(thread_id) {
-    $("div.komment_count").each(function(i, obj) {
-      if (thread_id === undefined || $(this).data("komment-id") == thread_id)
-      {
-        $(this).load("{{.CgiPath}}", {
-          r: "c",
-          komment_id: $(this).data("komment-id")
-        })
+    document.querySelectorAll("div.komment_count").forEach(function(obj) {
+      if (thread_id === undefined || obj.dataset.kommentId == thread_id) {
+        var request = new XMLHttpRequest();
+        request.open("GET", "{{.CgiPath}}?r=c;komment_id=" + encodeURIComponent(obj.dataset.kommentId));
+        request.onload = function() {
+          obj.innerHTML = request.responseText;
+        }
+        request.send(null);
       }
-    })
+    });
   }
 
   self.refreshMessages = function(thread_id) {
-    $("div.komment_messages").each(function(i, obj) {
-      if (thread_id === undefined || $(this).data("komment-id") == thread_id)
-      {
-        $(this).load("{{.CgiPath}}", {
-          r: "l",
-          komment_id: $(this).data("komment-id")
-        }, function() {
+    document.querySelectorAll("div.komment_messages").forEach(function(obj) {
+      if (thread_id === undefined || obj.dataset.kommentId == thread_id) {
+        var request = new XMLHttpRequest();
+        request.open("GET", "{{.CgiPath}}?r=l;komment_id=" + encodeURIComponent(obj.dataset.kommentId));
+        request.onload = function() {
+          obj.innerHTML = request.responseText;
           self.prepareEditButtons()
           self.prepareEndEditButtons()
           self.prepareEditForms()
-        })
+        }
+        request.send(null);
       }
-    })
+    });
   }
 
   self.replaceForms = function() {
-    $("div.komment_form").each(function(i, obj) {
-      var thread_id = $(this).data("komment-id")
-      $(this).load("{{.CgiPath}}", {
-        r: "form",
-        komment_id: thread_id
-      }, function() {
-        $(this).ajaxForm({
+    document.querySelectorAll("div.komment_form").forEach(function(obj) {
+      var request = new XMLHttpRequest();
+      var thread_id = obj.dataset.kommentId;
+      request.open("GET", "{{.CgiPath}}?r=form;komment_id=" + encodeURIComponent(thread_id));
+      request.onload = function() {
+        obj.innerHTML = request.responseText;
+        var form = obj.querySelector("form");
+        $(form).ajaxForm({
           resetForm: true,
           data: { r: "a", komment_id: thread_id },
           dataType: "json",
@@ -50,8 +52,9 @@ var Komment = (function() {
             alert("Error!")
           }
         })
-      })
-    })
+      }
+      request.send(null);
+    });
   }
 
   self.prepareEditForms = function() {
@@ -73,26 +76,42 @@ var Komment = (function() {
     });
   }
 
+  self.closest = function(n, predicate) {
+    do {
+      if (predicate(n)) {
+        return n;
+      }
+    } while (n = n && n.parentNode);
+  }
+
   self.prepareEditButtons = function() {
-    $("a.komment_edit_button").on('click', function() {
-      block = $(this).closest(".komment_block")
-      message = block.find(".komment_message").css("display", "none")
-      edit = block.find(".komment_edit").css("display", "block")
-    })
+    document.querySelectorAll("a.komment_edit_button").forEach(function(obj) {
+      obj.onclick = function() {
+        block = self.closest(obj, function(e) {
+          return e.classList.contains("komment_block");
+        })
+        message = block.querySelector(".komment_message").style.display = "none";
+        edit = block.querySelector(".komment_edit").style.display = "block";
+      }
+    });
   }
 
   self.prepareEndEditButtons = function() {
-    $("form.komment_edit_form > input[type=button]").on('click', function() {
-      block = $(this).closest(".komment_block")
-      message = block.find(".komment_message").css("display", "block")
-      edit = block.find(".komment_edit").css("display", "none")
-    })
+    document.querySelectorAll("form.komment_edit_form > input[type=button]").forEach(function(obj) {
+      obj.onclick = function() {
+        block = self.closest(obj, function(e) {
+          return e.classList.contains("komment_block");
+        })
+        message = block.querySelector(".komment_message").style.display = "block";
+        edit = block.querySelector(".komment_edit").style.display = "none";
+      }
+    });
   }
 
   self.init = function() {
-    self.replaceForms()
-    self.refreshCounts()
-    self.refreshMessages()
+    self.replaceForms();
+    self.refreshCounts();
+    self.refreshMessages();
   }
 
   return self
