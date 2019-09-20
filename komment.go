@@ -113,11 +113,12 @@ func sanitize_message(in string) string {
 	return out
 }
 
-func sanitize_name(in string) (out string) {
+func sanitize_name(in string) string {
 	if g_config.MaxNameLength > 0 && len(in) > g_config.MaxNameLength {
-		out = in[:g_config.MaxNameLength] + " ..."
-	}
-	return
+		return in[:g_config.MaxNameLength] + " ..."
+	} else {
+    return in
+  }
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
