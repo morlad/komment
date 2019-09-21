@@ -72,6 +72,15 @@ func emit_status_500(msg string) {
 	os.Exit(500)
 }
 
+func emit_status(status_code int, status string, msg string) {
+
+	fmt.Printf("Status: " + strconv.Itoa(status_code) + " " + status + "\r\n")
+	fmt.Printf("Content-Type: text/plain\r\n")
+	fmt.Printf("\r\n")
+	fmt.Printf("%s\r\n", msg)
+	os.Exit(status_code)
+}
+
 type Comment struct {
 	Name    string `json:"name"`
 	Comment string `json:"comment"`
@@ -389,6 +398,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		err = json.Unmarshal(content, &comment)
 		if err != nil {
 			emit_status_500(err.Error())
+		}
+		_, err = r.Cookie(COOKIE_PREFIX + comment.Stamp)
+		if err != nil {
+			emit_status(403, "Forbidden", "Not authorized to edit message.")
 		}
 		comment.Comment = new_comment
 		b, err := json.Marshal(comment)
