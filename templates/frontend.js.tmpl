@@ -53,7 +53,7 @@ var Komment = (function() {
                 self.refreshCounts(thread_id)
                 self.refreshMessages(thread_id)
               } else {
-                alert("Error!\n[" + request.responseText + "]");
+                alert("Error!\n" + request.responseText);
               }
             }
           };
@@ -79,7 +79,7 @@ var Komment = (function() {
             if (request.status == 200) {
               self.refreshMessages(obj.dataset.kommentId);
             } else {
-              alert("Error!\n[" + request.responseText + "]");
+              alert("Error!\n" + request.responseText);
             }
           }
         }
@@ -103,20 +103,20 @@ var Komment = (function() {
         block = self.closest(obj, function(e) {
           return e.classList.contains("komment_block");
         })
-        message = block.querySelector(".komment_message").style.display = "none";
-        edit = block.querySelector(".komment_edit").style.display = "block";
+        block.querySelector(".komment_message").style.display = "none";
+        block.querySelector(".komment_edit").style.display = "block";
       }
     });
   }
 
   self.prepareEndEditButtons = function() {
-    document.querySelectorAll("form.komment_edit_form > input[type=button]").forEach(function(obj) {
+    document.querySelectorAll("form.komment_edit_form input[type=button]").forEach(function(obj) {
       obj.onclick = function() {
         block = self.closest(obj, function(e) {
           return e.classList.contains("komment_block");
         })
-        message = block.querySelector(".komment_message").style.display = "block";
-        edit = block.querySelector(".komment_edit").style.display = "none";
+        block.querySelector(".komment_message").style.display = "block";
+        block.querySelector(".komment_edit").style.display = "none";
       }
     });
   }
