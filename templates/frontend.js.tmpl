@@ -40,38 +40,51 @@ var Komment = (function() {
       request.onload = function() {
         obj.innerHTML = request.responseText;
         var form = obj.querySelector("form");
-        $(form).ajaxForm({
-          resetForm: true,
-          data: { r: "a", komment_id: thread_id },
-          dataType: "json",
-          success: function() {
-            self.refreshCounts(thread_id)
-            self.refreshMessages(thread_id)
-          },
-          error: function() {
-            alert("Error!")
-          }
-        })
+        form.onsubmit = function() {
+          var data = new FormData(form);
+          data.append("r", "a");
+          data.append("komment_id", thread_id);
+          var request = new XMLHttpRequest();
+          request.open("POST", "{{.CgiPath}}");
+          request.onreadystatechange = function() {
+            if (request.readyState == 4) {
+              if (request.status == 200) {
+                form.reset();
+                self.refreshCounts(thread_id)
+                self.refreshMessages(thread_id)
+              } else {
+                alert("Error!\n[" + request.responseText + "]");
+              }
+            }
+          };
+          request.send(data);
+          return false;
+        }
       }
       request.send(null);
     });
   }
 
   self.prepareEditForms = function() {
-    $("form.komment_edit_form").ajaxForm({
-      data: {
-        r: "e"
-      },
-      dataType: 'html',
-      beforeSerialize: function(form, options) {
-        options.data.komment_id = form.data("komment-id")
-        options.data.message_id = form.data("message-id")
-      },
-      success: function(txt_response, txt_status, xhr, form) {
-        self.refreshMessages(form.data("komment-id"))
-      },
-      error: function() {
-        alert("Error!")
+    document.querySelectorAll("form.komment_edit_form").forEach(function(obj) {
+      obj.onsubmit = function() {
+        var data = new FormData(obj);
+        data.append("r", "e");
+        data.append("komment_id", obj.dataset.kommentId);
+        data.append("message_id", obj.dataset.messageId);
+        var request = new XMLHttpRequest();
+        request.open("POST", "{{.CgiPath}}");
+        request.onreadystatechange = function() {
+          if (request.readyState == 4) {
+            if (request.status == 200) {
+              self.refreshMessages(obj.dataset.kommentId);
+            } else {
+              alert("Error!\n[" + request.responseText + "]");
+            }
+          }
+        }
+        request.send(data);
+        return false;
       }
     });
   }
