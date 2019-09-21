@@ -252,7 +252,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 				return
 			} else {
 				emit_status_500(err.Error())
-				return
 			}
 		}
 		defer jsonpath.Close()
@@ -377,9 +376,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		// edit messages
 	} else if request == "e" {
 
-		w.Header().Set("Content-Type", "text/html")
-		w.WriteHeader(200)
-
 		message_id := r.FormValue("message_id")
 		path := fmt.Sprintf("%s/%v/%v.json", g_config.MessagesPath, komment_id, message_id)
 
@@ -397,10 +393,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		comment.Comment = new_comment
 		b, err := json.Marshal(comment)
 		if err != nil {
-			panic(err.Error())
+			emit_status_500(err.Error())
 		}
 		file, err := os.Create(path)
 		file.Write(b)
+
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(200)
 
 		// no request type -> error
 	} else {
@@ -423,7 +422,6 @@ func main() {
 	logFile, err := os.OpenFile(LOG_PATH, LOG_FLAG, LOG_MODE)
 	if err != nil {
 		emit_status_500(err.Error())
-		return
 	}
 	syscall.Dup2(int(logFile.Fd()), 2)
 
