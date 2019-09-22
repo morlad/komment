@@ -75,7 +75,8 @@ its execution permissions set.
  	// RATE LIMITING
 	// =============
 	// Does not work when running via CGI.
-	// Limiting is implemented as token buckets per IP address.
+	// Limiting is implemented as token bucket, with each message
+	// consuming one token.
 	//
 	// Maximum number of tokens in bucket.
 	"BucketSize": 5,

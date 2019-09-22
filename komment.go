@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/http/cgi"
@@ -52,19 +53,18 @@ type Configuration struct {
 	MaxNameLength int    `json:"MaxNameLength"`
 	Whitelist     string `json:"Whitelist"`
 	IdValidator   string `json:"IdValidator"`
-	BucketSize    int    `json:"BucketSize"`
-	TokenRate     int    `json:"TokenRate"`
+	BucketSize    int64  `json:"BucketSize"`
+	TokenRate     int64  `json:"TokenRate"`
 }
 
 var g_config Configuration
 
 type TokenBucket struct {
-	Tokens   int
-	LastAdd  int64
-	LastSeen int64
+	Tokens  int64
+	LastAdd int64
 }
 
-var g_tokens map[string]TokenBucket
+var g_token TokenBucket
 
 func elapsed(what string) func() {
 	start := time.Now()
@@ -73,22 +73,9 @@ func elapsed(what string) func() {
 	}
 }
 
-func emit_status_500(msg string) {
-
-	fmt.Printf("Status: 500 Script Error\r\n")
-	fmt.Printf("Content-Type: text/plain\r\n")
-	fmt.Printf("\r\n")
-	fmt.Printf("%s\r\n", msg)
-	os.Exit(500)
-}
-
-func emit_status(status_code int, status string, msg string) {
-
-	fmt.Printf("Status: " + strconv.Itoa(status_code) + " " + status + "\r\n")
-	fmt.Printf("Content-Type: text/plain\r\n")
-	fmt.Printf("\r\n")
-	fmt.Printf("%s\r\n", msg)
-	os.Exit(status_code)
+func emit_status(w http.ResponseWriter, status_code int, msg string) {
+	w.WriteHeader(status_code)
+	fmt.Fprintf(w, "%v", msg)
 }
 
 type Comment struct {
@@ -113,20 +100,14 @@ func uid_gen(r *http.Request, komment_id string) string {
 }
 
 func sanitize_komment_id(in string) string {
-	rex, err := regexp.Compile("(^\\.|[/\r\n\t])")
-	if err != nil {
-		emit_status_500(err.Error())
-	}
+	rex := regexp.MustCompile("(^\\.|[/\r\n\t])")
 	out := rex.ReplaceAllLiteralString(in, "_")
 	return strings.ToLower(out)
 }
 
 func sanitize_message(in string) string {
 	in = strings.Replace(in, "\r", "", -1)
-	rex, err := regexp.Compile("\n{3,}")
-	if err != nil {
-		emit_status_500(err.Error())
-	}
+	rex := regexp.MustCompile("\n{3,}")
 	out := rex.ReplaceAllLiteralString(in, "\n\n")
 	if g_config.MaxLength > 0 && len(out) > g_config.MaxLength {
 		out = out[:g_config.MaxLength] + " ..."
@@ -142,20 +123,11 @@ func sanitize_name(in string) string {
 	}
 }
 
-func min(a, b int) int {
+func min(a, b int64) int64 {
 	if a <= b {
 		return a
 	} else {
 		return b
-	}
-}
-
-func collect_tokens(tokens map[string]TokenBucket) {
-	expiration := time.Now().Unix() - (int64)(g_config.TokenRate*g_config.BucketSize)
-	for key, token := range tokens {
-		if token.LastSeen < expiration {
-			delete(tokens, key)
-		}
 	}
 }
 
@@ -173,23 +145,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		// rate limit - if enabled
 		if g_config.TokenRate > 0 && g_config.BucketSize > 0 {
 			now := time.Now().Unix()
-			ip := strings.Split(r.RemoteAddr, ":")[0]
 			// initialize bucket, if necessary
-			if _, ok := g_tokens[ip]; !ok {
-				g_tokens[ip] = TokenBucket{Tokens: 3, LastAdd: now, LastSeen: now}
-			}
-			token := g_tokens[ip]
-			new_tokens := (int)(now-token.LastAdd) / g_config.TokenRate
-			token.Tokens = min(token.Tokens+new_tokens, g_config.BucketSize)
-			token.LastAdd += (int64)(new_tokens * g_config.TokenRate)
-			token.LastSeen = now
-			if token.Tokens > 0 {
-				token.Tokens -= 1
-			}
-			g_tokens[ip] = token
-			collect_tokens(g_tokens)
-			if token.Tokens == 0 {
-				emit_status(429, "Too Many Requests", "Rate Limited; wait "+strconv.Itoa(g_config.TokenRate)+" seconds and retry")
+			new_tokens := (now - g_token.LastAdd) / g_config.TokenRate
+			g_token.Tokens = min(g_token.Tokens+new_tokens, g_config.BucketSize)
+			g_token.LastAdd += new_tokens * g_config.TokenRate
+			if g_token.Tokens > 0 {
+				g_token.Tokens -= 1
+			} else {
+				fmt.Fprintf(os.Stderr, "%v - (%v - %v)", g_config.TokenRate, now, g_token.LastAdd)
+				timeout := g_config.TokenRate - (now - g_token.LastAdd)
+				emit_status(w, 429, "Rate Limited: wait "+strconv.Itoa(int(timeout))+" seconds and retry")
+				return
 			}
 		}
 
@@ -248,7 +214,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				break
 			} else if !os.IsExist(err) {
-				emit_status_500(err.Error())
+				emit_status(w, 500, err.Error())
+				return
 			}
 		}
 		f.Write(b)
@@ -289,7 +256,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		// load template
 		templ, err := template.ParseFiles(g_config.TemplatePath + "/count.html.tmpl")
 		if err != nil {
-			emit_status_500(err.Error())
+			emit_status(w, 500, err.Error())
+			return
 		}
 		type CountTemplateData struct {
 			Count int
@@ -306,11 +274,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 				tdata.Count = 0
 				err = templ.Execute(w, tdata)
 				if err != nil {
-					emit_status_500(err.Error())
+					emit_status(w, 500, err.Error())
+					return
 				}
 				return
 			} else {
-				emit_status_500(err.Error())
+				emit_status(w, 500, err.Error())
+				return
 			}
 		}
 		defer jsonpath.Close()
@@ -321,7 +291,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		tdata.Count = len(names)
 		err = templ.Execute(w, tdata)
 		if err != nil {
-			emit_status_500(err.Error())
+			emit_status(w, 500, err.Error())
+			return
 		}
 
 		// form
@@ -332,7 +303,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		// load template
 		templ, err := template.ParseFiles(g_config.TemplatePath + "/form.html.tmpl")
 		if err != nil {
-			emit_status_500(err.Error())
+			emit_status(w, 500, err.Error())
+			return
 		}
 		type FormTemplateData struct {
 			CgiPath string
@@ -344,7 +316,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		tdata.CgiPath = g_config.CgiPath
 		err = templ.Execute(w, tdata)
 		if err != nil {
-			emit_status_500(err.Error())
+			emit_status(w, 500, err.Error())
+			return
 		}
 
 		// script
@@ -355,7 +328,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		// load template
 		templ, err := template.ParseFiles(g_config.TemplatePath + "/frontend.js.tmpl")
 		if err != nil {
-			emit_status_500(err.Error())
+			emit_status(w, 500, err.Error())
+			return
 		}
 		type FormTemplateData struct {
 			CgiPath string
@@ -367,7 +341,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		tdata.CgiPath = g_config.CgiPath
 		err = templ.Execute(w, tdata)
 		if err != nil {
-			emit_status_500(err.Error())
+			emit_status(w, 500, err.Error())
+			return
 		}
 
 		// list all messages
@@ -380,7 +355,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		templ, err := template.ParseFiles(g_config.TemplatePath + "/message.html.tmpl")
 		if err != nil {
-			emit_status_500(err.Error())
+			emit_status(w, 500, err.Error())
+			return
 		}
 
 		for number := 1; number <= LIMIT_COMMENTS; number += 1 {
@@ -389,13 +365,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 				if os.IsNotExist(err) {
 					break // reached end of files
 				} else {
-					emit_status_500(err.Error())
+					emit_status(w, 500, err.Error())
+					return
 				}
 			}
 			var comment Comment
 			err = json.Unmarshal(content, &comment)
 			if err != nil {
-				emit_status_500(err.Error())
+				emit_status(w, 500, err.Error())
+				return
 			}
 			cookie, err := r.Cookie(COOKIE_PREFIX + comment.Stamp)
 
@@ -428,7 +406,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			}
 			err = templ.Execute(w, tdata)
 			if err != nil {
-				emit_status_500(err.Error())
+				emit_status(w, 500, err.Error())
+				return
 			}
 		}
 
@@ -442,21 +421,25 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		content, err := ioutil.ReadFile(path)
 		if err != nil {
-			emit_status_500(err.Error())
+			emit_status(w, 500, err.Error())
+			return
 		}
 		var comment Comment
 		err = json.Unmarshal(content, &comment)
 		if err != nil {
-			emit_status_500(err.Error())
+			emit_status(w, 500, err.Error())
+			return
 		}
 		_, err = r.Cookie(COOKIE_PREFIX + comment.Stamp)
 		if err != nil {
-			emit_status(403, "Forbidden", "Not authorized to edit message.")
+			emit_status(w, 403, "Not authorized to edit message.")
+			return
 		}
 		comment.Comment = new_comment
 		b, err := json.Marshal(comment)
 		if err != nil {
-			emit_status_500(err.Error())
+			emit_status(w, 500, err.Error())
+			return
 		}
 		file, err := os.Create(path)
 		file.Write(b)
@@ -466,41 +449,40 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		// no request type -> error
 	} else {
-		emit_status_500("Invalid Request")
+		emit_status(w, 500, "Invalid Request")
+		return
 	}
 }
 
 func main() {
 
-	content, err := ioutil.ReadFile("config/komment.json")
-	if err != nil {
-		emit_status_500(err.Error())
-	}
-	err = json.Unmarshal(content, &g_config)
-	if err != nil {
-		emit_status_500(err.Error())
-	}
-
 	// redirect <stderr> to logfile
 	logFile, err := os.OpenFile(LOG_PATH, LOG_FLAG, LOG_MODE)
 	if err != nil {
-		emit_status_500(err.Error())
+		log.Fatalln(err)
 	}
 	syscall.Dup2(int(logFile.Fd()), 2)
 
-	g_tokens = make(map[string]TokenBucket)
+	content, err := ioutil.ReadFile("config/komment.json")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = json.Unmarshal(content, &g_config)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// serve
 	if g_config.ListenOn != "" {
 		http.HandleFunc("/", handler)
 		err := http.ListenAndServe(g_config.ListenOn, nil)
 		if err != nil {
-			panic("Unable to start HTTP server: " + err.Error())
+			log.Fatalln(err)
 		}
 	} else {
 		err = cgi.Serve(http.HandlerFunc(handler))
 		if err != nil {
-			emit_status_500(err.Error())
+			log.Fatalln(err)
 		}
 	}
 }
