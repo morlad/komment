@@ -52,9 +52,19 @@ type Configuration struct {
 	MaxNameLength int    `json:"MaxNameLength"`
 	Whitelist     string `json:"Whitelist"`
 	IdValidator   string `json:"IdValidator"`
+	BucketSize    int    `json:"BucketSize"`
+	TokenRate     int    `json:"TokenRate"`
 }
 
 var g_config Configuration
+
+type TokenBucket struct {
+	Tokens   int
+	LastAdd  int64
+	LastSeen int64
+}
+
+var g_tokens map[string]TokenBucket
 
 func elapsed(what string) func() {
 	start := time.Now()
@@ -132,6 +142,23 @@ func sanitize_name(in string) string {
 	}
 }
 
+func min(a, b int) int {
+	if a <= b {
+		return a
+	} else {
+		return b
+	}
+}
+
+func collect_tokens(tokens map[string]TokenBucket) {
+	expiration := time.Now().Unix() - (int64)(g_config.TokenRate*g_config.BucketSize)
+	for key, token := range tokens {
+		if token.LastSeen < expiration {
+			delete(tokens, key)
+		}
+	}
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
 
 	request := r.FormValue("r")
@@ -142,6 +169,29 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if request == "a" {
 
 		defer elapsed("append: " + komment_id)()
+
+		// rate limit - if enabled
+		if g_config.TokenRate > 0 && g_config.BucketSize > 0 {
+			now := time.Now().Unix()
+			ip := strings.Split(r.RemoteAddr, ":")[0]
+			// initialize bucket, if necessary
+			if _, ok := g_tokens[ip]; !ok {
+				g_tokens[ip] = TokenBucket{Tokens: 3, LastAdd: now, LastSeen: now}
+			}
+			token := g_tokens[ip]
+			new_tokens := (int)(now-token.LastAdd) / g_config.TokenRate
+			token.Tokens = min(token.Tokens+new_tokens, g_config.BucketSize)
+			token.LastAdd += (int64)(new_tokens * g_config.TokenRate)
+			token.LastSeen = now
+			if token.Tokens > 0 {
+				token.Tokens -= 1
+			}
+			g_tokens[ip] = token
+			collect_tokens(g_tokens)
+			if token.Tokens == 0 {
+				emit_status(429, "Too Many Requests", "Rate Limited; wait "+strconv.Itoa(g_config.TokenRate)+" seconds and retry")
+			}
+		}
 
 		// validate komment_id
 		var is_valid_id bool = g_config.Whitelist == "" && g_config.IdValidator == ""
@@ -437,6 +487,8 @@ func main() {
 		emit_status_500(err.Error())
 	}
 	syscall.Dup2(int(logFile.Fd()), 2)
+
+	g_tokens = make(map[string]TokenBucket)
 
 	// serve
 	if g_config.ListenOn != "" {
