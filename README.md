@@ -1,21 +1,38 @@
 # Komment
 
-Minimalist comment script for static webpages.
+Minimalist comment solution for static webpages.
 
 ## Design goals
 - Easy to install and setup
 - Easy to integrate into own page-layout
 - Maximize compliance with GDPR by only storing what is really necessary
+- Can be used as server or via CGI
 - **No dependencies** client-side while using Komment (e.g. jQuery)
 - **No dependencies** during run-time (No specific versions of a script environment or DB servers ...)
 - **No dependencies** during build-time (Go standard library only)
 
 ## Installation
 
-Build (or use a pre-built binary for) Komment for your OS/Architecture
-and copy it to your server. Make sure it is world-accessible and has
-its execution permissions set.
+1)	Build (or use a pre-built binary for) Komment for your OS/Architecture
+	and copy it - together with the `templates` and `config` directories -
+	to your server.
+	(**CGI**: make sure it is world-accessible and has
+	its execution permissions set correctly.)
+	
+2)	[Configure](#configuration) Komment via `komment.json` in the `config`-
+	subdirectory.
+	(**CGI**: make sure the config file is not accessible
+	from the webserver. The `config`-directory in this repo contains an
+	appropriate `.htaccess` file for Apache.)
+	
+3)	Modify the HTML [templates](#templates) in the `template`-directory to match your
+	sites layout.
+	
+4)	Make the [necessary modifications](#usage) to your HTML pages / theme.
 
+5)	(**CGI**: Done.)
+	Configure your webserver to make Komment accessible to the outside world.
+	
 ## Configuration
 
 `$(EXECUTABLE)/config/komment.json`
@@ -24,8 +41,10 @@ its execution permissions set.
 {
 	// BASIC SETTINGS
 	// ==============
-	// URI of the script; used in templates to reference Komment.
-	// i.e. <form>-targets &c.
+	// World-accessible URI of Komment.
+	// Despite the name, this is also the URI of Komment when
+	// running as server. Either directly or any proxy-mapping
+	// happening through nginx, Apache &c.
 	"CgiPath": "/komment/komment.cgi",
 	// Instead of Komment running as a one-off via CGI it can
 	// also run as a server. Set ListenOn to the host:port it
@@ -100,7 +119,7 @@ its execution permissions set.
 
 ### Templates
 
-Komment uses 3 templates you can use to tailor the HTML output to your needs:
+Komment uses 3 templates to tailor the HTML output to your needs:
 - count.html.tmpl
 - form.html.tmpl
 - message.html.tmpl
@@ -114,7 +133,7 @@ Count of messages for a certain thread (**data-komment-id**):
 <div class="komment_count" data-komment-id="example-2"></div>
 ````
 
-Insert form to add new comment:
+Insert a form to add a new comment:
 ```html
 <div class="komment_form" data-komment-id="example-2"></div>
 ```
