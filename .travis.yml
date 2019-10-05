@@ -1,0 +1,12 @@
+language: go
+
+go:
+- '1.13'
+
+deploy:
+  provider: releases
+  api_key:
+    secure: JH81SVtsFWOw+nEYNMx1hxxBFkeh0SMMSCYvD7wazJJ6n25+9uV0xlTPRAKaceT1NOwFbLQCMOSNDmsvdkeEaBng1lQbaxCVZLAhWDNfslCcr/a7lMF/Us39OX6hdHtFP+Q4T20Q/w/MYWBYbPok0XtHULaxG327BiMoiZHRaObMTuWmGbjqrVAchYkQ8sLI+t4ODq3H5tjYnjlnlVT8hMEyKlwDmAJHdn4hrhvwJ/pyySO7cyn10at3FhBNl/Plw2XEfdCCpMO9vL3rfQrLc0tfROkQy1/qUEHHIBHgE7A1xFcIHCuCNpIOBP/+ZqUMDuOCetazf3YQ9wmXdOfhTfxwVkkJDIIQ0tldCh10sczm3ISuWkPX1srHO3gfWGjdVzfThCI7EITMOpXYuy64KzmhBfblONMyAdrRGDf5CS6WTV2hYjGVfcsO255nX8zBi1tC28JOQ7VcTWoOTFktMHAQO2VqK+FVhB9R6oimnXgJA+efXCfcD7Gj/TJOZjKaPSLBVJaE/FygY5ELnC8rpdg7XZSVTtxTCwQHYN75jxxmGUvBUMviPdpW5m+xKWx3P6qwTgozdEFDREdK/TO5+8lnw2WUF11C5L/ANSHBJ8urToh2oUpJQ7/F9d7ZjgT+Z/IsBwdlfyrrvhqI0trGLujJonPm2kTlEhdMKWUeigs=
+  file: build/komment.linux_amd64
+  on:
+    tags: true
